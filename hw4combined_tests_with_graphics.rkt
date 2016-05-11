@@ -6,7 +6,7 @@
 
 ;; Be sure to put your homework file in the same folder as this test file.
 ;; Uncomment the line below and change HOMEWORK_FILE to the name of your homework file.
-;;(require "HOMEWORK_FILE")
+(require "hw4.rkt")
 
 ;; A simple library for displaying a 2x3 grid of pictures: used
 ;; for fun in the tests below (look for "Tests Start Here").  No need to understand
@@ -66,7 +66,7 @@
 
 ; a zero-argument function: call (one-visual-test) to open the graphics window, etc.
 (define (one-visual-test)
-  (place-repeatedly (open-window) 0.5 (cycle-lists nums files) 27))
+ (place-repeatedly (open-window) 0.5 (cycle-lists nums files) 27))
 
 ; similar to previous but uses only two files and one position on the grid
 (define (visual-zero-only)
