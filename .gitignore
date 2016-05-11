@@ -1,0 +1,8 @@
+emacs-24.3
+*.el
+*.tar.gz
+*.lnk
+*.*~
+compiled
+*.pdf
+#hw1test.sml#

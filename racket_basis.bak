@@ -1,0 +1,4 @@
+#lang racket
+(define x 2)
+(define cube (x)
+  (* x x x))

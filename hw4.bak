@@ -1,0 +1,17 @@
+
+#lang racket
+
+(provide (all-defined-out)) ;; so we can put tests in a second file
+
+;; put your code below
+
+(define (sequence low high stride)
+  (letrec ([append
+            (lambda(li low)
+              (if (> low high) null
+                  (cons (list low) (append li (+ low stride)))))])
+    (append null low)))
+
+(define (string-append-map xs suffix)
+  (map (lambda(item)
+         (string-append item suffix)) xs))
