@@ -46,16 +46,16 @@ fun longest_string2 li =
   List.foldl (fn (x,y) => if String.size(x) < String.size(y) then y else x) "" li
 
 fun longest_string_helper f li =
-  List.foldl(fn (x,y) => if f(String.size(x),String.size(y)) then y else x) "" li
+  List.foldl(fn (x,y) => if f(String.size(x),String.size(y)) then x else y) "" li
 
-fun longest_string3 li = 
-  longest_string_helper(fn (x,y) => x <= y) li
+fun longest_string3 li =
+  longest_string_helper Int.> li
 
 fun longest_string4 li =
-  longest_string_helper(fn (x,y) => x < y) li
+  longest_string_helper Int.>= li
 
 fun longest_capitalized li =
-  longest_string_helper(Int.<=) (only_capitals(li))
+  longest_string_helper Int.> (only_capitals(li))
 
 fun rev_string s =
   (String.implode o List.rev o String.explode) s
@@ -73,12 +73,12 @@ fun all_answers f li =
   let fun helper(li, acc) = 
 	case li of
 	    [] => acc
-	 |  a::b => let val ans = f(a) 
+	 |  a::b => let val ans = f(a)
 		    in case ans of
 			   NONE => helper(b, acc)
 			|  SOME(v) => case acc of
-					  NONE => helper(b, SOME([v]))
-				       |  SOME(u) => helper(b, SOME(u@[v]))
+					  NONE => helper(b, SOME(v))
+				       |  SOME(u) => helper(b, SOME(u@v))
 		    end
   in helper(li, NONE)
   end
@@ -94,17 +94,42 @@ fun count_some_var (s, p) =
 
 fun check_pat p =
   let fun pattern_list p =
-	case p of
-	    Variable s => [s]
-	  | TupleP ps => List.foldl(fn (p, i) => pattern_list(p)@i) [] ps
-	  | _ => []
+	      case p of
+	          Variable s => [s]
+	        | TupleP ps => List.foldl(fn (p, i) => pattern_list(p)@i) [] ps
+          | ConstructorP (s, p1) => pattern_list(p1)
+	        | _ => []
       fun is_repeat li =
-	case li of
-	    [] => true
-	  | a::b => not(List.exists(fn x => x = a) b)
+	      case li of
+	          [] => true
+	        | a::b => not(List.exists(fn x => x = a) b)
   in is_repeat(pattern_list(p))
   end
 
-fun match (v, p) = NONE
+fun match (v, p) =
+  case p of
+      Wildcard => SOME []
+    | ConstP a =>
+      let val a = a in
+          case v of
+              Const b => if a = b then SOME [] else NONE
+            | _ => NONE
+      end
+    | UnitP => if v = Unit then SOME [] else NONE
+    | Variable s => SOME [(s, v)]
+   | TupleP ps =>
+      let val ps = ps in
+      case v of
+          Tuple vs => all_answers match (ListPair.zip(vs, ps))
+        | _ => NONE
+      end
+   | ConstructorP (s, p1) =>
+      let val s1 = s in
+          case v of
+              Constructor (s2, v1) => if s1 = s2 then match (v1, p1) else NONE
+            | _ => NONE
+      end
 
-fun first_match v li = NONE
+fun first_match v li =
+  SOME(first_answer (fn p => match(v, p)) li)
+  handle NoAnswer => NONE

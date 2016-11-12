@@ -3,7 +3,6 @@
 (* To run the test, add a new line to the top of this file: use "homeworkname.sml"; *)
 (* All the tests should evaluate to true. For example, the REPL should say: val test1 = true : bool *)
 
-use "hw3provided.sml";
 
 val test1 = only_capitals ["A","B","C"] = ["A","B","C"]
 

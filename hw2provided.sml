@@ -11,11 +11,11 @@ fun same_string(s1 : string, s2 : string) =
 (* you may assume that Num is always used with values 2, 3, ..., 10
    though it will not really come up *)
 datatype suit = Clubs | Diamonds | Hearts | Spades
-datatype rank = Jack | Queen | King | Ace | Num of int 
+datatype rank = Jack | Queen | King | Ace | Num of int
 type card = suit * rank
 
 datatype color = Red | Black
-datatype move = Discard of card | Draw 
+datatype move = Discard of card | Draw
 
 exception IllegalMove
 
@@ -26,12 +26,12 @@ fun all_except_option (s, li) =
     | a::b => if same_string(a,s)
 	      then SOME(b)
 	      else let val res = all_except_option(s,b)
-		   in case res of 
+		   in case res of
 			  NONE => NONE
 		       |  SOME(c)=> SOME(a::c)
 		   end
 
-fun get_substitutions1 (li,s) = 
+fun get_substitutions1 (li,s) =
   case li of
       [] => []
     | a::b => let val res = all_except_option(s,a)
@@ -40,45 +40,45 @@ fun get_substitutions1 (li,s) =
 		   | SOME(c) => c @ get_substitutions1(b,s)
 	      end
 
-fun get_substitutions2 (list,string) = 
-  let fun get(li,s,acc) = 
+fun get_substitutions2 (list,string) =
+  let fun get(li,s,acc) =
 	  case li of
 	      [] => acc
 	    | a::b => let val res = all_except_option(s,a)
-		      in case res of 
+		      in case res of
 			     NONE => get(b,s,acc)
 			   | SOME(c) => get(b,s,acc@c)
 		      end
   in get(list,string,[])
-  end 
+  end
 
-fun similar_names (list,record) = 
+fun similar_names (list,record) =
 case list of
-    [] => []
-  | _ => case record of 
-		{first=f, middle=m, last=l} => 
+    [] => [record]
+  | _ => case record of
+		{first=f, middle=m, last=l} =>
 		let val res = f::get_substitutions2(list,f)
 		    fun get (li,acc) =
-		      case li of 
+		      case li of
 			  [] => acc
 			| a::b => get(b,acc@[{first=a,middle=m,last=l}])
 		in get(res,[])
 		end
 
-fun card_color (card) = 
+fun card_color (card) =
   case card of
       (Spades,rank) => Black
    |  (Clubs,rank) => Black
    |  _ => Red
 
-fun card_value (card) = 
+fun card_value (card) =
   case card of
       (suit,Num a) => a
    |  (suit,Ace) => 11
    |  _ => 10
 
 fun remove_card (cs, c, e) =
-  case cs of 
+  case cs of
       [] => raise e
    |  a::b =>  if a = c
 	       then b
@@ -88,17 +88,17 @@ fun all_same_color (cs) =
   case cs of
       [] => true
    |  _::[] => true
-   |  head::(neck::rest) => card_color(head) = card_color(neck) andalso all_same_color(rest)
+   |  head::(neck::rest) => (card_color(head) = card_color(neck)) andalso all_same_color(neck::rest)
 
 fun sum_cards (cs) =
-  let fun sum (li,acc) = 
+  let fun sum (li,acc) =
 	case li of
 	    [] => acc
 	 |  a::b => sum(b, acc+card_value(a))
   in sum(cs,0)
   end
 
-fun score (cs, goal) = 
+fun score (cs, goal) =
   let val sum = sum_cards(cs)
   in  let val pre = if sum > goal
 		    then 3 * (sum - goal)
@@ -109,11 +109,27 @@ fun score (cs, goal) =
       end
   end
 
-(*fun officiate (card_list, move_list, goal) = 
-let fun run (cs, hs, ms, sum) = 
-      case ms of 
-	  [] => score(hs, goal)
-       |  a::b => case a of
-		      Discard card => remove_card(hs,card,IllegalMove)
-		   |  Draw => case 
-*)
+fun officiate (card_list, move_list, goal) =
+  let fun play (cs, hs, ms, sum) =
+        case cs of
+            [] => score(hs, goal)
+         |  _ =>
+            if sum > goal
+            then sum
+            else
+                case ms of
+	                  [] => score(hs, goal)
+                 |  head::tail =>
+                    case head of
+		                    Discard card =>
+                        let
+                            val new_hs = remove_card(hs, card, IllegalMove)
+                        in
+                            play(cs, new_hs, tail, score(new_hs, goal))
+                        end
+		                 |  Draw =>
+                        case cs of
+                            card::remain =>
+                            play(remain, card::hs, tail, score(card::hs, goal))
+  in play(card_list, [], move_list, 0)
+  end
