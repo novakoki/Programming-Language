@@ -70,17 +70,23 @@ fun first_answer f li =
     | [] => raise NoAnswer
 
 fun all_answers f li =
-  let fun helper(li, acc) = 
+  let fun helper(li, acc) =
 	case li of
 	    [] => acc
-	 |  a::b => let val ans = f(a)
-		    in case ans of
-			   NONE => helper(b, acc)
-			|  SOME(v) => case acc of
-					  NONE => helper(b, SOME(v))
+	 |  a::b =>
+      let val ans = f(a)
+		  in
+          case ans of
+			        NONE => helper(b, acc)
+			     |  SOME(v) =>
+              case acc of
+					        NONE => helper(b, SOME(v))
 				       |  SOME(u) => helper(b, SOME(u@v))
-		    end
-  in helper(li, NONE)
+      end
+  in
+      case li of
+          [] => SOME []
+        | _ => helper(li, NONE)
   end
 
 fun count_wildcards p =
@@ -120,7 +126,7 @@ fun match (v, p) =
    | TupleP ps =>
       let val ps = ps in
       case v of
-          Tuple vs => all_answers match (ListPair.zip(vs, ps))
+          Tuple vs => if length vs = length ps then all_answers match (ListPair.zip(vs, ps)) else NONE
         | _ => NONE
       end
    | ConstructorP (s, p1) =>
