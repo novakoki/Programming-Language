@@ -24,20 +24,14 @@
 
 ;; CHANGE (put your solutions here)
 (define (racketlist->mupllist xs)
-  (letrec ([helper
-            (lambda (xs acc)
-              (if (null? xs)
-                  acc
-                  (helper (cdr xs) (apair (car xs) acc))))])
-    (helper (reverse xs) (aunit))))
+  (if (null? xs)
+      (aunit)
+      (apair (car xs) (racketlist->mupllist (cdr xs)))))
 
 (define (mupllist->racketlist xs)
-  (letrec ([helper
-            (lambda (xs acc)
-              (if (aunit? xs)
-                  acc
-                  (helper (apair-e2 xs) (cons (apair-e1 xs) acc))))])
-    (reverse (helper xs null))))
+  (if (aunit? xs)
+      null
+      (cons (apair-e1 xs) (mupllist->racketlist (apair-e2 xs)))))
 
 ;; Problem 2
 
@@ -74,6 +68,10 @@
         [(mlet? e)
          (let ([v1 (eval-under-env (mlet-e e) env)])
            (eval-under-env (mlet-body e) (cons (cons (mlet-var e) v1) env)))]
+        [(fun? e)
+         (let ([nameopt (fun-nameopt e)]
+               [clo (closure env e)])
+           (closure (cons (cons nameopt clo) env) e))]
         [(call? e)
          (let ([clo (eval-under-env (call-funexp e) env)]
                [para (eval-under-env (call-actual e) env)])
@@ -112,18 +110,38 @@
 (define (ifaunit e1 e2 e3)
   (ifgreater (isaunit e1) (int 0) e2 e3))
 
-(define (mlet* lstlst e2) "CHALLANGE")
+(define (mlet* lstlst e2)
+  (letrec ([helper
+            (lambda (lst acc)
+              (if (null? lst)
+                  acc
+                  (helper (cdr lst) (mlet (caar lst) (cdar lst) acc))))])
+    (helper lstlst e2)))
 
 (define (ifeq e1 e2 e3 e4)
   (ifgreater e1 e2 e4 (ifgreater e2 e1 e4 e4)))
 
 ;; Problem 4
 
-(define mupl-map "CHANGE")
+(define mupl-map
+  (fun #f "mf"
+       (fun "helper" "xs"
+            (ifaunit
+             (var "xs")
+             (aunit)
+             (apair
+              (call (var "mf") (fst (var "xs")))
+              (call (var "helper") (snd (var "xs"))))))))
 
 (define mupl-mapAddN 
   (mlet "map" mupl-map
-        "CHANGE (notice map is now in MUPL scope)"))
+        (fun #f "x"
+             (fun #f "xs"
+                  (call
+                   (call (var "map")
+                         (fun #f "y" (add (var "x") (var "y"))))
+                   (var "xs"))))))
+                         
 
 ;; Challenge Problem
 
